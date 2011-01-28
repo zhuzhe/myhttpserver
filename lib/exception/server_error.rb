@@ -1,0 +1,4 @@
+
+
+class ServerError < StandardError
+end
