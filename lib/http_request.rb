@@ -2,33 +2,66 @@ require "util/http_util"
 
 class HttpRequest
 
+  include HttpUtil
+
+  attr_reader :header
+
   def initialize
-    @raw_header = []
+    @raw_header = ""
+  end
+
+  def parse socket
+    begin
+      read_header socket
+    rescue Exception => e
+      puts "#{e.class}: #{e.message}\n\t#{e.backtrace[0]}"
+    end
   end
 
   def read_header socket
     if socket
-      while line = read_line(socket)
-        @raw_header << line
+      if data = socket.read_nonblock(1024)
+        @raw_header << data
       end
       @header = HttpUtil.parse_header(@raw_header)
-      puts @header
+      puts @header.inspect
+    end
+  end
+
+  def request_method
+    @header["request_method"]
+  end
+
+  def request_uri
+    @header["request_uri"]
+  end
+
+  def request_http_version
+    @header["http_version"]
+  end
+
+  def keep_alive?
+    if @header["connection"] == "keep-alive"
+      true
+    else
+      false
     end
   end
 
 
-  private
 
-  def _read_data io, method, *args
-    io._send_(method, *args)
+  def _read_data(io, method, *arg)
+    io.__send__(method, *arg)
   end
 
-  def read_line io, size = 4096
-    _read_data io, :gets, "\n", size
+  def read_line(io)
+    _read_data(io, :gets, LF)
   end
 
-  def read_data io, size
-    _read_data io, :read,size
+  def read_data(io, size)
+    _read_data(io, :read, size)
   end
+
+
 
 end

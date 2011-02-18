@@ -6,12 +6,15 @@ class Server
   attr_reader :status, :logger, :config, :listeners
 
   def initialize
+    @config = []
     @listeners = []
     @status = :Stop
   end
   
   def start &block
     raise ServerError, "server has already run" if @status == :Running
+
+    puts "#{self.class}#start: pid=#{$$}"
 
     thread_group = ThreadGroup.new
 
@@ -24,13 +27,13 @@ class Server
             if socket = accept_client(sock)
               thread = start_thread(socket, &block)
               thread[:SocketThread] = true
-              thread_group.add(thread)
+              thread_group.add thread
             end
           end
         end
       end
     end
-    thread_group.each { |th| th.join if th[:SocketThread] }
+    thread_group.list.each { |th| th.join if th[:SocketThread] }
     @status = :Stop
   end
 
@@ -56,9 +59,6 @@ class Server
     sock = nil
     begin
       sock = socket.accept
-      sock.sync = true
-      IOUtil::set_non_block socket
-      IOUtil::set_close_on_exec socket
     end
     sock
   end
@@ -66,7 +66,8 @@ class Server
   def start_thread sock, &block
     Thread.start do
       Thread.current[:Socket] = sock
-      block ? block.call : run(sock)
+     
+      block ? block.call(sock) : run(sock)
     end
   end
 

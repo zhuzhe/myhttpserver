@@ -5,11 +5,13 @@ module IOUtil
 
   def set_non_block(io)
     flag = File::NONBLOCK
-    if defined?(Fcntl::F_GETFL)
-      flag |= io.fcntl(Fcntl::F_GETFL)
-    end
+#    if defined?(Fcntl::F_GETFL)
+#      flag |= io.fcntl(Fcntl::F_GETFL)
+#    end
     io.fcntl(Fcntl::F_SETFL, flag)
   end
+
+
 
   module_function :set_non_block
 
