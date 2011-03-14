@@ -1,89 +1,106 @@
 require "exception/server_error"
 require "util/io_util"
+require "log"
+require "config"
 
-class Server
+module Light
+
+  class ServerError < StandardError; end
+
+  class Server
   
-  attr_reader :status, :logger, :config, :listeners
+    attr_reader :status, :logger, :config, :listeners
 
-  def initialize
-    @config = []
-    @listeners = []
-    @status = :Stop
-  end
-  
-  def start &block
-    raise ServerError, "server has already run" if @status == :Running
-
-    puts "#{self.class}#start: pid=#{$$}"
-
-    thread_group = ThreadGroup.new
-
-    @status = :Running
-
-    while @status == :Running
-      begin
-        if sockets_array = IO.select(@listeners, nil, nil, 2.0)
-          sockets_array[0].each do |sock|
-            if socket = accept_client(sock)
-              thread = start_thread(socket, &block)
-              thread[:SocketThread] = true
-              thread_group.add thread
-            end
-          end
-        end
-      end
-    end
-    thread_group.list.each { |th| th.join if th[:SocketThread] }
-    @status = :Stop
-  end
-
-  def listen address, port
-    @listeners += IOUtil::create_listeners(address, port)
-  end
-
-  def stop
-    if @status == :Running
+    def initialize config = {}
+      @config = Config::General.dup.update(config)
+      @config[:Log] ||= Log.new
+      @logger = @config[:Log]
+      @logger.info("Web Server")
+      @listeners = []
       @status = :Stop
     end
-  end
-
-  def shutdown
-    stop
-    @listeners.each{|sock|
-      sock.close
-    }
-    @listeners.clear
-  end
   
-  def accept_client socket
-    sock = nil
-    begin
-      sock = socket.accept
-    end
-    sock
-  end
+    def start &block
+      raise ServerError, "server has already run" if @status == :Running
 
-  def start_thread sock, &block
-    Thread.start do
-      Thread.current[:Socket] = sock
+      puts "#{self.class}#start: pid=#{$$}"
+
+      thread_group = ThreadGroup.new
+
+      @status = :Running
+
+      while @status == :Running
+        begin
+          if sockets_array = IO.select(@listeners, nil, nil, 2.0)
+            sockets_array[0].each do |sock|
+              if socket = accept_client(sock)
+                thread = start_thread(socket, &block)
+                thread[:SocketThread] = true
+                thread_group.add thread
+              end
+            end
+          end
+        rescue Errno::EBADF, IOError => ex
+          msg = "#{ex.class}: #{ex.message}\n\t#{ex.backtrace[0]}"
+          @logger.error msg
+        end
+      end
+
+      @logger.info "going to shutdown ..."
+      thread_group.list.each { |th| th.join if th[:SocketThread] }
+      @logger.info "#{self.class}#has already shutdown"
+      @status = :Stop
+    end
+
+    def listen address, port
+      @listeners += IOUtil::create_listeners(address, port)
+    end
+
+    def stop
+      if @status == :Running
+        @status = :Stop
+      end
+    end
+
+    def shutdown
+      stop
+      @listeners.each{|sock|
+        sock.close
+      }
+      @listeners.clear
+    end
+  
+    def accept_client socket
+      sock = nil
+      begin
+        sock = socket.accept
+      end
+      sock
+    end
+
+    def start_thread sock, &block
+      Thread.start do
+        Thread.current[:Socket] = sock
      
-      block ? block.call(sock) : run(sock)
+        block ? block.call(sock) : run(sock)
+      end
     end
-  end
 
-  def run sock
-    puts "run must be provide by yourself"
-  end
+    def run sock
+      puts "run must be provide by yourself"
+    end
 
-  def do_get
+    def do_get
 
-  end
+    end
 
-  def do_post
+    def do_post
 
-  end
+    end
 
-  def do_option
+    def do_option
+
+    end
 
   end
 

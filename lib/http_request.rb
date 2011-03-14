@@ -20,7 +20,7 @@ class HttpRequest
 
   def read_header socket
     if socket
-      if data = socket.read_nonblock(1024)
+      if data = socket.read_nonblock(2048)
         @raw_header << data
       end
       @header = HttpUtil.parse_header(@raw_header)
