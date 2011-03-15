@@ -12,7 +12,7 @@ module Light
     attr_accessor :header, :body
 
 
-    def initialize
+    def initialize config
       @header = Hash.new
       @body = ""
       @status = 200

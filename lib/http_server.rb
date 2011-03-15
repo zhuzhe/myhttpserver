@@ -7,32 +7,40 @@ module Light
 
   class HttpServer < Server
 
-    def initialize
-      super
+    class HTTPServerError < ServerError; end
+
+    def initialize options = {},  default=Config::HTTP
+      super options,  default
+      @mount_tab = Hash.new
     end
 
     def run sock
-      res = HttpRequest.new
-      req = HttpResponse.new
+      res = HttpRequest.new @config
+      req = HttpResponse.new @config
       begin
-        while true
+        timeout = @config[:RequestTimeout]
+        while timeout > 0
           break unless IO.select([sock], nil, nil, 0.5)
+          timeout = 0 if @status != :Running
+          timeout -= 0.5
+
           res.parse(sock)
-          #        p sock.read_nonblock(1024)
           req.request_method = res.request_method
           req.request_uri = res.request_uri
           req.request_http_version = res.request_http_version
-          req.content_type  = "text/html"
-          req.body = "<html>hello</html>"
-          req.send_response(sock)
+          status, headers, body = self.service(req, res)
+          req << body
+#          req.content_type  = "text/html"
+#          req.body = "<html>hello</html>"
+#          req.send_response(sock)
+#          sock.close
+#          break
           sock.close
           break
         end
-      rescue HttpStatus::ServerError => e
-        #      puts "#{e.class}: #{e.message}\n\t#{e.backtrace[0]}"
-        req.status =  500
-      rescue HttpStatus::CLIENT_ERROR => e
-        req.status = 400
+
+      rescue Exception => e
+        puts "#{e.class}: #{e.message}\n\t#{e.backtrace[0]}"
       ensure
         req.send_response(sock)
         sock.close
@@ -40,8 +48,29 @@ module Light
 
     end
 
+
+    def mount(dir, servlet, *options)
+      @logger.debug(sprintf("%s is mounted on %s.", servlet.inspect, dir))
+      @mount_tab[dir] = [ servlet, options ]
+    end
+
+    def unmount(dir)
+      @logger.debug(sprintf("unmount %s.", dir))
+      @mount_tab.delete(dir)
+    end
+
     def service res, req
-      servlet = ""
+      servlet, options = search_servlet(req.path)
+      si = servlet.get_instance(self, *options)
+      @logger.debug(format("%s is invoked.", si.class.name))
+      si.service(req, res)
+    end
+    
+    def search_servlet path
+      if @mount_tab[path]
+        servlet, options = @mount_tab[path]
+        [servlet, options]
+      end
     end
 
   end

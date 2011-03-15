@@ -11,8 +11,8 @@ module Light
   
     attr_reader :status, :logger, :config, :listeners
 
-    def initialize config = {}
-      @config = Config::General.dup.update(config)
+    def initialize config = {}, default = Config::General
+      @config = default.dup.update(config)
       @config[:Log] ||= Log.new
       @logger = @config[:Log]
       @logger.info("Web Server")

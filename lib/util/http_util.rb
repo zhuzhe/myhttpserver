@@ -69,11 +69,16 @@ module HttpUtil
     raw_header.split(CRLF).each_with_index do |item, index|
       if index == 0
         header["request_method"], header["request_uri"], header["http_version"] = item.split(" ")
+        header["path_info"], header['request_string'] = header["request_uri"].split("?")
+        header["script_name"] = "/#{header["path_info"].split("/").last}"
+
       else
         key, value = item.split(":")
         header[key.downcase] = value.strip
+
       end
     end
+    header["port"]  = header["path_info"].split(":").last
     header
   end
 
