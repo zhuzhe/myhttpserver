@@ -20,7 +20,7 @@ module Light
       begin
         timeout = @config[:RequestTimeout]
         while timeout > 0
-          break unless IO.select([sock], nil, nil, 0.5)
+          break if IO.select([sock], nil, nil, 0.5).nil?
           timeout = 0 if @status != :Running
           timeout -= 0.5
 
@@ -28,13 +28,8 @@ module Light
           req.request_method = res.request_method
           req.request_uri = res.request_uri
           req.request_http_version = res.request_http_version
-          status, headers, body = self.service(req, res)
-          req << body
-#          req.content_type  = "text/html"
-#          req.body = "<html>hello</html>"
-#          req.send_response(sock)
-#          sock.close
-#          break
+          self.service(req, res)
+          req.send_response(sock)
           sock.close
           break
         end
@@ -68,8 +63,7 @@ module Light
     
     def search_servlet path
       if @mount_tab[path]
-        servlet, options = @mount_tab[path]
-        [servlet, options]
+         @mount_tab[path]
       end
     end
 

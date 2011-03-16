@@ -13,6 +13,7 @@ module Light
 
 
     def initialize config
+      @congif = config
       @header = Hash.new
       @body = ""
       @status = 200

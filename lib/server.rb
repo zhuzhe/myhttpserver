@@ -23,7 +23,7 @@ module Light
     def start &block
       raise ServerError, "server has already run" if @status == :Running
 
-      puts "#{self.class}#start: pid=#{$$}"
+      @logger.info "#{self.class}#start: pid=#{$$}"
 
       thread_group = ThreadGroup.new
 

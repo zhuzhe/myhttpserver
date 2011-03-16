@@ -64,24 +64,30 @@ module HttpUtil
     "zip"   => "application/zip",
   }
 
-  def  parse_header raw_header
+  def  parse_request raw_header
     header = {}
-    raw_header.split(CRLF).each_with_index do |item, index|
+    body = ""
+    items = raw_header.split(CRLF)
+    items.each_with_index do |item, index|
       if index == 0
         header["request_method"], header["request_uri"], header["http_version"] = item.split(" ")
         header["path_info"], header['request_string'] = header["request_uri"].split("?")
         header["script_name"] = "/#{header["path_info"].split("/").last}"
 
       else
-        key, value = item.split(":")
-        header[key.downcase] = value.strip
-
+        if item == ""
+          body = items[index + 1]
+          break
+        else
+          key, value = item.split(":")
+          header[key.downcase] = value.strip
+        end
       end
     end
     header["port"]  = header["path_info"].split(":").last
-    header
+    [header, body]
   end
 
-  module_function :parse_header
+  module_function :parse_request
 
 end

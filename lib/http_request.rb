@@ -8,7 +8,8 @@ class HttpRequest
 
   def initialize  config
     @config = config
-    @raw_header = ""
+    @logger = @config[:Log]
+    @raw = ""
     @body = ""
     @peeraddr = nil
 
@@ -31,11 +32,9 @@ class HttpRequest
   def read_header socket
     if socket
       if data = socket.read_nonblock(2048)
-        @raw_header << data
-        @body << data
+        @raw << data
       end
-      @header = HttpUtil.parse_header(@raw_header)
-      puts @raw_header
+      @header, @body = HttpUtil.parse_request(@raw)
     end
   end
 
@@ -61,10 +60,6 @@ class HttpRequest
 
   def body
     @body
-  end
-
-  def read_body socket
-    @body = socket.read_nonblock(2048)
   end
 
   def meta_vars
