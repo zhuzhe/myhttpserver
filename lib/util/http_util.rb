@@ -65,15 +65,14 @@ module HttpUtil
   }
 
   def  parse_request raw_header
+    status_line = {}
     header = {}
     body = ""
     items = raw_header.split(CRLF)
     items.each_with_index do |item, index|
       if index == 0
-        header["request_method"], header["request_uri"], header["http_version"] = item.split(" ")
-        header["path_info"], header['request_string'] = header["request_uri"].split("?")
-        header["script_name"] = "/#{header["path_info"].split("/").last}"
-
+        status_line["request_method"], status_line["request_uri"], status_line["http_version"] = item.split(" ")
+        status_line["path_info"], status_line['query_string'] = status_line["request_uri"].split("?")
       else
         if item == ""
           body = items[index + 1]
@@ -84,8 +83,8 @@ module HttpUtil
         end
       end
     end
-    header["port"]  = header["path_info"].split(":").last
-    [header, body]
+    status_line["port"]  = status_line["path_info"].split(":").last
+    [status_line, header, body]
   end
 
   module_function :parse_request

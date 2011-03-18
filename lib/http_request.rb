@@ -4,7 +4,7 @@ class HttpRequest
 
   include HttpUtil
 
-  attr_reader :header
+  attr_reader :status_line, :header, :body
 
   def initialize  config
     @config = config
@@ -19,35 +19,29 @@ class HttpRequest
     begin
       @socket = socket
       @peeraddr = socket.respond_to?(:peeraddr) ? socket.peeraddr : []
-      read_header socket
+      if data = socket.read_nonblock(2048)
+        @raw << data
+      end
+      @status_line, @header, @body = HttpUtil.parse_request(@raw)
     rescue Exception => e
       puts "#{e.class}: #{e.message}\n\t#{e.backtrace[0]}"
     end
   end
 
   def path
-    header["path_info"]
-  end
-
-  def read_header socket
-    if socket
-      if data = socket.read_nonblock(2048)
-        @raw << data
-      end
-      @header, @body = HttpUtil.parse_request(@raw)
-    end
+    @status_line["path_info"]
   end
 
   def request_method
-    @header["request_method"]
+    @status_line["request_method"]
   end
 
   def request_uri
-    @header["request_uri"]
+    @status_line["request_uri"]
   end
 
   def request_http_version
-    @header["http_version"]
+    @status_line["http_version"]
   end
 
   def keep_alive?
@@ -71,29 +65,35 @@ class HttpRequest
     meta["CONTENT_LENGTH"] = cl if cl.to_i > 0
     meta["CONTENT_TYPE"] = ct.dup if ct
     meta["GATEWAY_INTERFACE"] = "CGI/1.1"
-    meta["PATH_INFO"] = @header["path_info"] ? @header["path_info"] : ""
-    meta["QUERY_STRING"] = @header["query_string"] ? @header["query_string"] : ""
+    meta["PATH_INFO"] = @status_line["path_info"] ? @status_line["path_info"] : ""
+    meta["QUERY_STRING"] = @status_line["query_string"] ? @status_line["query_string"] : ""
     meta["REMOTE_ADDR"] = @peeraddr[3]
     meta["REMOTE_HOST"] = @peeraddr[2]
     meta["REMOTE_USER"] = nil
-    meta["REQUEST_METHOD"] = @header["request_method"]
-    meta["REQUEST_URI"] = @header["request_uri"]
-    meta["SCRIPT_NAME"] = @header["script_name"]
-    meta["SERVER_NAME"] = @header['host']
-    meta["SERVER_PORT"] = @header["port"]
+    meta["REQUEST_METHOD"] = @status_line["request_method"]
+    meta["REQUEST_URI"] = @status_line["request_uri"]
+    meta["SCRIPT_NAME"] = @status_line["script_name"]
+    meta["SERVER_NAME"] = @status_line['host']
+    meta["SERVER_PORT"] = @status_line["port"]
     meta["SERVER_PROTOCOL"] = "HTTP/" + @config[:HTTPVersion].to_s
     meta["SERVER_SOFTWARE"] = @config[:ServerSoftware]
 
-#    self.each{|key, val|
-#      next if /^content-type$/i =~ key
-#      next if /^content-length$/i =~ key
-#      name = "HTTP_" + key
-#      name.gsub!(/-/o, "_")
-#      name.upcase!
-#      meta[name] = val
-#    }
+    self.each{|key, val|
+      next if /^content-type$/i =~ key
+      next if /^content-length$/i =~ key
+      name = "HTTP_" + key
+      name.gsub!(/-/o, "_")
+      name.upcase!
+      meta[name] = val
+    }
 
     meta
+  end
+
+  def each
+    @header.each{|k, v|
+      yield(k, v)
+    }
   end
 
 

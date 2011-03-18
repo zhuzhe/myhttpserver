@@ -10,6 +10,7 @@ module Light
 
     attr_accessor :request_uri, :request_method, :request_http_version
     attr_accessor :header, :body
+    attr_accessor :cookies
 
 
     def initialize config
@@ -18,6 +19,7 @@ module Light
       @body = ""
       @status = 200
       @reason_phrase = nil
+      @cookies = []
     end
 
     def [](field)
@@ -88,6 +90,11 @@ module Light
         temp = key.gsub(/\b\w\b|\-\w/){$&.upcase}
         data << "#{temp}: #{value}" << CRLF
       end
+
+      @cookies.each{|cookie|
+        data << "Set-Cookie: " << cookie.to_s << CRLF
+      }
+
       data << CRLF
 
       _write_data(socket, data)

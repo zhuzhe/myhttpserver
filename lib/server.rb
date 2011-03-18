@@ -1,13 +1,15 @@
-require "exception/server_error"
+
 require "util/io_util"
 require "log"
 require "config"
 
 module Light
 
-  class ServerError < StandardError; end
+  
 
   class Server
+
+    class ServerError < StandardError; end
   
     attr_reader :status, :logger, :config, :listeners
 
@@ -15,7 +17,7 @@ module Light
       @config = default.dup.update(config)
       @config[:Log] ||= Log.new
       @logger = @config[:Log]
-      @logger.info("Web Server")
+      @logger.info("Light HTTP Web Server")
       @listeners = []
       @status = :Stop
     end
@@ -23,7 +25,7 @@ module Light
     def start &block
       raise ServerError, "server has already run" if @status == :Running
 
-      @logger.info "#{self.class}#start: pid=#{$$}"
+      @logger.info "#{self.class}#start: pid=#{$$}   #{@config[:Host]}:#{@config[:Port]}"
 
       thread_group = ThreadGroup.new
 

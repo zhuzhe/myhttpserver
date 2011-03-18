@@ -1,4 +1,4 @@
-require "exception/http_server_error"
+
 require "server"
 require "http_request"
 require "http_response"
@@ -45,7 +45,7 @@ module Light
 
 
     def mount(dir, servlet, *options)
-      @logger.debug(sprintf("%s is mounted on %s.", servlet.inspect, dir))
+      @logger.info(sprintf("%s is mounted on %s", servlet.inspect, dir))
       @mount_tab[dir] = [ servlet, options ]
     end
 
@@ -57,13 +57,17 @@ module Light
     def service res, req
       servlet, options = search_servlet(req.path)
       si = servlet.get_instance(self, *options)
-      @logger.debug(format("%s is invoked.", si.class.name))
+      @logger.info(format("%s is invoked.", si.class.name))
       si.service(req, res)
     end
     
     def search_servlet path
-      if @mount_tab[path]
-         @mount_tab[path]
+
+      keys = @mount_tab.keys.sort.reverse
+      keys.collect! { |k| Regexp.escape(k) }
+      scanner = Regexp.new("^(#{keys.join("|")}).*(?=/|$)")
+      if scanner =~ path
+         @mount_tab["/"]
       end
     end
 

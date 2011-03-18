@@ -1,4 +1,0 @@
-
-
-class ServerError < StandardError
-end
