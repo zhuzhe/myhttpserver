@@ -92,18 +92,6 @@ module Light
       puts "run must be provide by yourself"
     end
 
-    def do_get
-
-    end
-
-    def do_post
-
-    end
-
-    def do_option
-
-    end
-
   end
 
 end

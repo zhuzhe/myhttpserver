@@ -22,4 +22,4 @@ app = Rack::Builder.new {
   run ActionController::Dispatcher.new
 }.to_app
 
-Light::RackHandler.run app, :Port => 3003, :Host => "127.0.0.1"
+Light::RackHandler.run app, :Port => 3003

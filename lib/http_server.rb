@@ -9,7 +9,7 @@ module Light
 
     class HTTPServerError < ServerError; end
 
-    def initialize options = {},  default=Config::HTTP
+    def initialize options = {},  default = Config::HTTP
       super options,  default
       @mount_tab = Hash.new
     end
