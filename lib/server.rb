@@ -20,6 +20,7 @@ module Light
       @logger.info("Light HTTP Web Server")
       @listeners = []
       @status = :Stop
+      @workers = []
     end
   
     def start &block

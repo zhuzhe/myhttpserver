@@ -78,12 +78,11 @@ module HttpUtil
           body = items[index + 1]
           break
         else
-          key, value = item.split(":")
+          key, value = item.split(":", 2)
           header[key.downcase] = value.strip
         end
       end
     end
-    status_line["port"]  = status_line["path_info"].split(":").last
     [status_line, header, body]
   end
 

@@ -4,7 +4,7 @@ class HttpRequest
 
   include HttpUtil
 
-  attr_reader :status_line, :header, :body
+  attr_reader :status_line, :header, :body, :port, :server_name
 
   def initialize  config
     @config = config
@@ -23,6 +23,7 @@ class HttpRequest
         @raw << data
       end
       @status_line, @header, @body = HttpUtil.parse_request(@raw)
+      @server_name, @port = @header["host"].split(":")
     rescue Exception => e
       puts "#{e.class}: #{e.message}\n\t#{e.backtrace[0]}"
     end
@@ -73,8 +74,8 @@ class HttpRequest
     meta["REQUEST_METHOD"] = @status_line["request_method"]
     meta["REQUEST_URI"] = @status_line["request_uri"]
     meta["SCRIPT_NAME"] = @status_line["script_name"]
-    meta["SERVER_NAME"] = @status_line['host']
-    meta["SERVER_PORT"] = @status_line["port"]
+    p meta["SERVER_NAME"] = @server_name
+    p meta["SERVER_PORT"] = @port
     meta["SERVER_PROTOCOL"] = "HTTP/" + @config[:HTTPVersion].to_s
     meta["SERVER_SOFTWARE"] = @config[:ServerSoftware]
 
