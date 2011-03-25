@@ -73,6 +73,7 @@ module Light
       @header['date']  = Time.now.strftime("%a, %d %b %Y %X GMT")
       if @status == 304 || @status == 204 || @status == HttpStatus::info?(@status)
         @header.delete('content-length')
+        @header.delete('content-type')
         @body = ""
       elsif @header['content-length'].nil?
         if @body.nil?

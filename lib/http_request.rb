@@ -74,8 +74,8 @@ class HttpRequest
     meta["REQUEST_METHOD"] = @status_line["request_method"]
     meta["REQUEST_URI"] = @status_line["request_uri"]
     meta["SCRIPT_NAME"] = @status_line["script_name"]
-    p meta["SERVER_NAME"] = @server_name
-    p meta["SERVER_PORT"] = @port
+    meta["SERVER_NAME"] = @server_name
+    meta["SERVER_PORT"] = @port
     meta["SERVER_PROTOCOL"] = "HTTP/" + @config[:HTTPVersion].to_s
     meta["SERVER_SOFTWARE"] = @config[:ServerSoftware]
 
