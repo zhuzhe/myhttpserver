@@ -1,7 +1,7 @@
 require "http_server"
 require "httpservlet/rack_handler"
 
-require "/home/belen/server_monitor/config/environment"
+require "/home/belen/Projects/bbt_tool/config/environment"
 require "rubygems"
 require "rack"
 

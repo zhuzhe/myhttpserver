@@ -78,7 +78,8 @@ module Light
 
 
     def reason_phrase(code)
-      StatusMessage[code.to_i]
+      status_message = StatusMessage[code.to_i]
+      status_message ? status_message : 'UNKNOWN'
     end
 
     def info?(code)

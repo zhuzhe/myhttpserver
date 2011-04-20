@@ -61,7 +61,7 @@ module Light
     end
 
     def status_line
-      "HTTP/#{@http_version} #{@status} #{@reason_phrase} #{CRLF}"
+      "HTTP/#{@congif[:HTTPVersion]} #{@status} #{@reason_phrase} #{CRLF}"
     end
 
     def status=(status)
